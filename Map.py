@@ -19,6 +19,24 @@ class Map:
 
         return game_map
 
+    def generate_chunk(self, x, y, CHUNK_SIZE):
+
+        chunk_data = []
+        for y_pos in range(CHUNK_SIZE):
+            for x_pos in range(CHUNK_SIZE):
+                target_x = x * CHUNK_SIZE + x_pos
+                target_y = y * CHUNK_SIZE + y_pos
+                tile_type = 0
+                if target_y > 5:
+                    tile_type  = 2
+                if target_y == 5:
+                    tile_type  = 1
+                #for grass tile
+                #for plant tile
+                if tile_type != 0:
+                    chunk_data.append([[target_x,target_y], tile_type])
+
+        return chunk_data
 
 # map = Map('Assets/Sprites/tiles/tile.txt')
 # arr_map = map.load_map()

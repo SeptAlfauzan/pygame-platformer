@@ -1,10 +1,12 @@
-import pygame, sys, glob
+import pygame, sys, glob, random
 
 from pygame.mixer import stop # import pygame and sys
 from Player import Player
 from PlayerSystem import *
 from Map import Map
 from MapSystem import *
+pygame.mixer.pre_init(44100, -16, 2, 512)#(frequency, size, channel, buffer)
+# pygame.mixer.set_num_channels(64)#how many sound can play at once
 clock = pygame.time.Clock() # set up the clock
 
 from pygame.locals import * # import pygame modules
@@ -30,7 +32,8 @@ player_flip = False
 animation_frame = 0
 #animations dictonaries
 player_animations = {}
-
+#sfx dictionaries
+sfx = {}
 # backgrounds with paralax effect
 backgrounds = [
     [0.10, #scroll speed
@@ -87,8 +90,8 @@ air_timer = 0
 
 # player_rect = pygame.Rect(50, 50, player_image.get_width(), player_image.get_height())
 # test_rect = pygame.Rect(100,100,100,50)
-
 list_map_texture = [
+    None,
     pygame.image.load('./Assets/Sprites/tiles/grass_tile.png').convert(),
     pygame.image.load('./Assets/Sprites/tiles/plain_dirt_tile.png').convert(),
     pygame.image.load('./Assets/Sprites/tiles/L_edge_grass_tile.png').convert(),
@@ -96,6 +99,9 @@ list_map_texture = [
 ]
 map_game = Map('Assets/Sprites/tiles/tile.txt', list_map_texture)
 map_bp = map_game.load_map()
+
+game_map = {}
+CHUNK_SIZE = 8
 
 #to render white line as collider outline
 def render_collision(display, obj, scroll):
@@ -119,11 +125,25 @@ player_animations['run'] = load_animation('./Assets/Sprites/Adventurer-1.5/run',
 player_animations['jump'] = load_animation('./Assets/Sprites/Adventurer-1.5/jump', 12)
 #this for change state between two animation
 current_player_anim = player_animations['idle']
+
+#sfx and music
+#load sfx
+sfx['jump'] = pygame.mixer.Sound('./Assets/Audio/footstep_concrete_000.ogg')
+sfx['grass'] = [pygame.mixer.Sound('./Assets/Audio/footstep_grass_001.ogg'), pygame.mixer.Sound('./Assets/Audio/footstep_grass_002.ogg'), pygame.mixer.Sound('./Assets/Audio/footstep_grass_003.ogg')]
+sfx_grass_timer = 0
+for sfx_grass in sfx['grass']:
+    sfx_grass.set_volume(0.3)
+#load music
+pygame.mixer.music.load('./Assets/Audio/Music/bgm.wav')
+pygame.mixer.music.play(-1)
+pygame.mixer.music.set_volume(0.5)
 #GAME LOOP
 while True: # game loop
     display.fill((133, 133, 133))
     # MOVE TO EVERY PIXEL ON SCREEN 
     # TO SIMULATE CAMERA MOVEMENT
+    if sfx_grass_timer > 0:
+        sfx_grass_timer -= 1
 
     heading_x = player.coll_rect.x - scroll[0] + 30
     heading_y = player.coll_rect.y - scroll[1]
@@ -150,7 +170,21 @@ while True: # game loop
 
     # Render Map 
     tile_rects = []
-    tile_rects = MapSystem.render(map_bp, map_game.list_texture, display, tile_rects, scroll)
+    # tile_rects = MapSystem.render(map_bp, map_game.list_texture, display, tile_rects, scroll)
+    for y in range(2):
+        for x in range(5):
+            target_x = x -1 + int(scroll[0]/(CHUNK_SIZE*16))
+            target_y = y + int(scroll[1]/(CHUNK_SIZE*16))
+            target_chunk = str(target_x)+':'+str(target_y)
+            if target_chunk not in game_map:
+                # create chunk of map
+                game_map[target_chunk] = map_game.generate_chunk(target_x, target_y, CHUNK_SIZE)
+                #render only on chunk
+            for tile in game_map[target_chunk]:
+                display.blit(map_game.list_texture[tile[1]], (tile[0][0]*16-scroll[0], tile[0][1]*16-scroll[1]))
+                if tile[1] in [1,2]:
+                    tile_rects.append(pygame.Rect(tile[0][0]*16, tile[0][1]*16, 16, 16))
+
     ###########    Movement     #############
     player_movement = [0, 0]
     if moving_right:
@@ -177,6 +211,9 @@ while True: # game loop
         player_y_momentum = 0
         air_timer = 0
         is_jump = False
+        if player_movement[0] != 0 and sfx_grass_timer == 0:
+            sfx_grass_timer = 20
+            random.choice(sfx['grass']).play()
     else:
         air_timer += 1
     #animation handler change
@@ -198,8 +235,7 @@ while True: # game loop
     display.blit(pygame.transform.flip(pygame.image.load(current_player_anim[animation_frame]), player_flip, False), (player.coll_rect.x - scroll[0] -15, player.coll_rect.y - scroll[1] - 5))
     animation_frame += 1
     # SHOW PLAYER COLLISION
-    render_collision(display, player, scroll)
-
+    # render_collision(display, player, scroll)
     # MOVEMENT HANDLER
     for event in pygame.event.get(): # event loop
         if event.type == QUIT: # check for window quit
@@ -211,7 +247,8 @@ while True: # game loop
             if event.key == K_a:
                 moving_left = True
             if event.key == K_SPACE:
-                if air_timer < 6:
+                if air_timer < 6:#it mean when player not in air
+                    sfx['jump'].play()
                     player_y_momentum = -5
                     is_jump = True
         if event.type == KEYUP:
