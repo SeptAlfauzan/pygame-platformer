@@ -1,0 +1,6 @@
+altgraph==0.17
+noise==1.2.2
+pkg-resources==0.0.0
+pygame==2.0.1
+pyinstaller==4.3
+pyinstaller-hooks-contrib==2021.1

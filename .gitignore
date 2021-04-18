@@ -1,2 +1,8 @@
 /.vscode
 /__pycache__
+/build
+/dist
+/venv/include
+/venv/lib
+/venv/lib64
+/venv/share

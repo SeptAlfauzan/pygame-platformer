@@ -1,3 +1,4 @@
+import random, noise
 class Map:
 
     def __init__(self, map_path, list_texture):
@@ -27,11 +28,17 @@ class Map:
                 target_x = x * CHUNK_SIZE + x_pos
                 target_y = y * CHUNK_SIZE + y_pos
                 tile_type = 0
-                if target_y > 5:
+
+                height = int(noise.pnoise1(target_x * 0.1, repeat=100000)*5)
+                if target_y > 5 - height:
                     tile_type  = 2
-                if target_y == 5:
+                if target_y == 5 - height:
                     tile_type  = 1
                 #for grass tile
+                if target_y == 4 - height:
+                    tile_type = 4
+                    if random.randint(1,5) >= 2:
+                        tile_type = 3
                 #for plant tile
                 if tile_type != 0:
                     chunk_data.append([[target_x,target_y], tile_type])

@@ -102,7 +102,7 @@ list_map_texture = [
     pygame.image.load('./Assets/Sprites/tiles/R_edge_grass_tile.png').convert()
 ]
 map_game = Map('Assets/Sprites/tiles/tile.txt', list_map_texture)
-# map_bp = map_game.load_map()
+map_bp = map_game.load_map()
 
 game_map = {}
 CHUNK_SIZE = 8
@@ -116,6 +116,7 @@ def render_collision(display, obj, scroll):
     pygame.draw.rect(display, WHITE, pos, 1)
 
 # animation 
+global animation_frames
 # animation_frames = []
 def load_animation(path, frame_duration):
     animation_name = path.split('/')[-1]#split path last dir name as animation's name
@@ -139,7 +140,7 @@ for sfx_grass in sfx['grass']:
 #load music
 pygame.mixer.music.load('./Assets/Audio/Music/bgm.wav')
 pygame.mixer.music.play(-1)
-pygame.mixer.music.set_volume(0.2)
+pygame.mixer.music.set_volume(0.5)
 #GAME LOOP
 while True: # game loop
     #clear screen with default background color
@@ -152,7 +153,7 @@ while True: # game loop
         sfx_grass_timer -= 1
 
     heading_x = player.coll_rect.x - scroll[0] + 30
-    heading_y = player.coll_rect.y - scroll[1] - 20
+    heading_y = player.coll_rect.y - scroll[1]
 
     true_scroll[0] += (heading_x - ((WINDOW_SIZE[0]/scale)/2) - (player.sprite.get_width() / 2))/32.05
     true_scroll[1] += (heading_y - ((WINDOW_SIZE[1]/scale)/2) - (player.sprite.get_height() / 2))/32.05
@@ -247,7 +248,13 @@ while True: # game loop
     display.blit(pygame.transform.flip(pygame.image.load(current_player_anim[animation_frame]), player_flip, False), (player.coll_rect.x - scroll[0] -15, player.coll_rect.y - scroll[1] - 5))
     animation_frame += 1
     #Render decoration
-    # render_collision(display, player, scroll)
+    # for y in range(2):
+    #     for x in range(5):
+    #         target_x = x -1 + int(scroll[0]/(CHUNK_SIZE*16))
+    #         target_y = y + int(scroll[1]/(CHUNK_SIZE*16))
+    #         target_chunk = str(target_x)+':'+str(target_y)
+    # SHOW PLAYER COLLISION
+    render_collision(display, player, scroll)
     # MOVEMENT HANDLER
     for event in pygame.event.get(): # event loop
         if event.type == QUIT: # check for window quit
@@ -275,6 +282,6 @@ while True: # game loop
     decor_surf = pygame.transform.scale(decor_display, WINDOW_SIZE)
 
     screen.blit(surf, (0, 0))#main layer
-    # screen.blit(decor_surf, (0, 0))#decor layer
+    screen.blit(decor_surf, (0, 0))#decor layer
     pygame.display.update() # update display
     clock.tick(60) # maintain 60 fps
